@@ -8,6 +8,11 @@ variable "s3_bucket_name" {
   default     = "catbird-terraform-state"
 }
 
+variable "dynamodb_table_name" {
+  description = "Name of the DynamoDB table to store the terraform state lock"
+  default     = "catbird-terraform-state-lock"
+}
+
 variable "vpc_name" {
   description = "value of the VPC name"
   default     = "catbird-vpc"
