@@ -1,6 +1,6 @@
 name: Terraform AWS Workflow
 
-on: #trigger
+on: #trigger this
   workflow_dispatch:
     inputs: # workflow params
       tfpath:
