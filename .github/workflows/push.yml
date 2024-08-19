@@ -1,0 +1,20 @@
+ 
+name: Push to feature branch
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!main'
+
+env:
+  TF_LOG: INFO
+  TF_INPUT: false
+
+jobs: 
+  check-code:
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+          shell: bash
+          working-directory: .
