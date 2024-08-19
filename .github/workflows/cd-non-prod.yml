@@ -1,0 +1,40 @@
+name: Terraform AWS Workflow
+
+on: #trigger
+  workflow_dispatch:
+    inputs: # workflow params
+      tfpath:
+        description: 'Path to Terraform config files'
+        required: true
+        default: './'
+  push: # event that triggers the workflow
+    branches:
+      - non-prod
+jobs:
+  tf_code_check:
+    name: Terraform Validation and Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2 # checkout the repository under $GITHUB_WORKSPACE so the workflow can access the code
+    - name: Configure AWS Credentials for Github Actions
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    - name: Setup Terraform CLI
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Terraform init, plan and apply
+      working-directory: ${{ github.event.inputs.tfpath }}
+      run: |
+        echo `pwd`
+        echo "tfpath: ${{ github.event.inputs.tfpath }}"
+        echo "'' Running TF init''"
+        terraform init
+        echo "'' Running TF Validate''"
+        terraform validate
+        echo "'' Running TF Plan''"
+        terraform plan
+        terraform apply -auto-approve
+
