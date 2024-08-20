@@ -3,12 +3,12 @@ name: Deploy E-comm Non-Prod # Name of the workflow
 on:
   workflow_dispatch:
   push:
-    branches: [non-prod]
+    branches: [prod]
 
 jobs:
   plan:
     name: Terraform Plan
-    environment: non-production
+    environment: production
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
@@ -31,7 +31,7 @@ jobs:
           terraform plan
   deploy:
     name: Terraform Deploy
-    environment: non-production
+    environment: production
     needs: plan
     runs-on: ubuntu-20.04
     steps:
