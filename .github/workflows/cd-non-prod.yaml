@@ -1,40 +1,55 @@
-name: Terraform AWS Workflow
+name: Example Service Release
 
-on: #trigger this
+on:
   workflow_dispatch:
-    inputs: # workflow params
-      tfpath:
-        description: 'Path to Terraform config files'
-        required: true
-        default: './'
-  push: # event that triggers the workflow
-    branches:
-      - non-prod
+  push:
+    branches: [non-prod]
+    paths: ["./"]
+
 jobs:
-  tf_code_check:
-    name: Terraform Validation and Build
-    runs-on: ubuntu-latest
+  plan:
+    name: Terraform plan
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2 # checkout the repository under $GITHUB_WORKSPACE so the workflow can access the code
-    - name: Configure AWS Credentials for Github Actions
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-    - name: Setup Terraform CLI
-      uses: hashicorp/setup-terraform@v2
+      - uses: actions/checkout@v3
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Initialise project and view terraform plan
+        run: |
+          cd terraform 
+          cd qa
+          terraform fmt
+          terraform init 
+          terraform plan -auto-approve
 
-    - name: Terraform init, plan and apply
-      working-directory: ${{ github.event.inputs.tfpath }}
-      run: |
-        echo `pwd`
-        echo "tfpath: ${{ github.event.inputs.tfpath }}"
-        echo "'' Running TF init''"
-        terraform init
-        echo "'' Running TF Validate''"
-        terraform validate
-        echo "'' Running TF Plan''"
-        terraform plan
-        terraform apply -auto-approve
-
+  deploy:
+    name: Terraform Deploy
+    needs: plan
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Initialise project and deploy terraform
+        run: |
+          cd terraform
+          cd qa
+          terraform fmt
+          terraform init
+          terraform apply -auto-approve
