@@ -1,4 +1,4 @@
-name: CD Non-Prod # Name of the workflow
+name: Deploy E-comm Non-Prod # Name of the workflow
 
 on:
   workflow_dispatch:
