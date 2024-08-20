@@ -1,10 +1,9 @@
-name: Example Service Release
+name: CD Non-Prod
 
 on:
   workflow_dispatch:
   push:
     branches: [non-prod]
-    paths: ["./"]
 
 jobs:
   plan:
