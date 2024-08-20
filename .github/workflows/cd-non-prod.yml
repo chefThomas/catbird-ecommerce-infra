@@ -8,6 +8,7 @@ on:
 jobs:
   plan:
     name: Terraform plan
+    environment: non-production
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -24,11 +25,12 @@ jobs:
       - name: Initialise project and view terraform plan
         run: |
           terraform fmt
-          terraform init 
+          terraform init
           terraform plan -auto-approve
 
   deploy:
     name: Terraform Deploy
+    environment: non-production
     needs: plan
     runs-on: ubuntu-20.04
     steps:
