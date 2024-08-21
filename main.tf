@@ -26,34 +26,34 @@ resource "aws_ecr_repository" "ecomm-ecr-repo" {
 }
 # --- Build & push image ---
 
-locals {
-  repo_url = aws_ecr_repository.ecomm-ecr-repo.repository_url
-}
+# locals {
+#   repo_url = aws_ecr_repository.ecomm-ecr-repo.repository_url
+# }
 
-resource "null_resource" "image" {
-  triggers = {
-    hash = md5(join("-", [for x in fileset("", "./{*.py,*.tsx,Dockerfile}") : filemd5(x)]))
-  }
+# resource "null_resource" "image" {
+#   triggers = {
+#     hash = md5(join("-", [for x in fileset("", "./{*.py,*.tsx,Dockerfile}") : filemd5(x)]))
+#   }
 
-  provisioner "local-exec" {
-    command = <<EOF
-      aws ecr get-login-password | docker login --username AWS --password-stdin ${local.repo_url}
-      docker build --platform linux/amd64 -t ${local.repo_url}:latest .
-      docker push ${local.repo_url}:latest
-    EOF
-  }
-}
+#   provisioner "local-exec" {
+#     command = <<EOF
+#       aws ecr get-login-password | docker login --username AWS --password-stdin ${local.repo_url}
+#       docker build --platform linux/amd64 -t ${local.repo_url}:latest .
+#       docker push ${local.repo_url}:latest
+#     EOF
+#   }
+# }
 
-data "aws_ecr_image" "latest" {
-  repository_name = aws_ecr_repository.ecomm-ecr-repo.name
-  image_tag       = "latest"
-  depends_on      = [null_resource.image]
-}
+# data "aws_ecr_image" "latest" {
+#   repository_name = aws_ecr_repository.ecomm-ecr-repo.name
+#   image_tag       = "latest"
+#   depends_on      = [null_resource.image]
+# }
 
 
 # Creating an ECS cluster
-resource "aws_ecs_cluster" "nextjs14-cluster" {
-  name = "nextjs14-cluster" # Naming the cluster
+resource "aws_ecs_cluster" "catbird-nextjs-cluster" {
+  name = "catbird-nextjs-cluster" # Naming the cluster
 }
 
 # creating an iam policy document for ecsTaskExecutionRole
@@ -81,12 +81,12 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
 }
 
 # Creating the task definition
-resource "aws_ecs_task_definition" "nextjs14-task-test" {
-  family                   = "nextjs14-task-test" # Naming our first task
+resource "aws_ecs_task_definition" "catbird-nextjs-task-test" {
+  family                   = "catbird-nextjs-task-test" # Naming our first task
   container_definitions    = <<DEFINITION
   [
     {
-      "name": "nextjs14-container",
+      "name": "catbird-nextjs-container",
       "image": "${aws_ecr_repository.ecomm-ecr-repo.repository_url}",
       "essential": true,
       "portMappings": [
@@ -125,8 +125,8 @@ resource "aws_default_subnet" "default_subnet_c" {
 }
 
 # Creating a load balancer
-resource "aws_alb" "nextjs14-lb" {
-  name               = "nextjs14-lb" # Naming our load balancer
+resource "aws_alb" "catbird-nextjs-lb" {
+  name               = "catbird-nextjs-lb" # Naming our load balancer
   load_balancer_type = "application"
   subnets = [ # Referencing the default subnets
     "${aws_default_subnet.default_subnet_a.id}",
@@ -134,11 +134,11 @@ resource "aws_alb" "nextjs14-lb" {
     "${aws_default_subnet.default_subnet_c.id}"
   ]
   # Referencing the security group
-  security_groups = ["${aws_security_group.nextjs14-lb_security_group.id}"]
+  security_groups = ["${aws_security_group.catbird-nextjs-lb_security_group.id}"]
 }
 
 # Creating a security group for the load balancer:
-resource "aws_security_group" "nextjs14-lb_security_group" {
+resource "aws_security_group" "catbird-nextjs-lb_security_group" {
   ingress {
     from_port   = 80
     to_port     = 80
@@ -155,7 +155,7 @@ resource "aws_security_group" "nextjs14-lb_security_group" {
 }
 
 # Creating a target group for the load balancer
-resource "aws_lb_target_group" "nextjs14-target_group" {
+resource "aws_lb_target_group" "catbird-nextjs-target_group" {
   name        = "target-group"
   port        = 80
   protocol    = "HTTP"
@@ -168,45 +168,45 @@ resource "aws_lb_target_group" "nextjs14-target_group" {
 }
 
 # Creating a listener for the load balancer
-resource "aws_lb_listener" "nextjs14-listener" {
-  load_balancer_arn = aws_alb.nextjs14-lb.arn # Referencing our load balancer
+resource "aws_lb_listener" "catbird-nextjs-listener" {
+  load_balancer_arn = aws_alb.catbird-nextjs-lb.arn # Referencing our load balancer
   port              = "80"
   protocol          = "HTTP"
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.nextjs14-target_group.arn # Referencing our target group
+    target_group_arn = aws_lb_target_group.catbird-nextjs-target_group.arn # Referencing our target group
   }
 }
 
 # Creating the service
-resource "aws_ecs_service" "nextjs14-service" {
-  name            = "nextjs14-service"
-  cluster         = aws_ecs_cluster.nextjs14-cluster.id            # Referencing our created Cluster
-  task_definition = aws_ecs_task_definition.nextjs14-task-test.arn # Referencing the task our service will spin up
+resource "aws_ecs_service" "catbird-nextjs-service" {
+  name            = "catbird-nextjs-service"
+  cluster         = aws_ecs_cluster.catbird-nextjs-cluster.id            # Referencing our created Cluster
+  task_definition = aws_ecs_task_definition.catbird-nextjs-task-test.arn # Referencing the task our service will spin up
   launch_type     = "FARGATE"
   desired_count   = 1 # Setting the number of containers we want deployed to 3
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.nextjs14-target_group.arn # Referencing our target group
-    container_name   = "nextjs14-container"
+    target_group_arn = aws_lb_target_group.catbird-nextjs-target_group.arn # Referencing our target group
+    container_name   = "catbird-nextjs-container"
     container_port   = 3000 # Specifying the container port
   }
 
   network_configuration {
     subnets          = ["${aws_default_subnet.default_subnet_a.id}", "${aws_default_subnet.default_subnet_b.id}", "${aws_default_subnet.default_subnet_c.id}"]
-    assign_public_ip = true                                                         # Providing our containers with public IPs
-    security_groups  = ["${aws_security_group.nextjs14-service_security_group.id}"] # Setting the security group
+    assign_public_ip = true                                                               # Providing our containers with public IPs
+    security_groups  = ["${aws_security_group.catbird-nextjs-service_security_group.id}"] # Setting the security group
   }
 }
 
 # Creating a security group for the service
-resource "aws_security_group" "nextjs14-service_security_group" {
+resource "aws_security_group" "catbird-nextjs-service_security_group" {
   ingress {
     from_port = 0
     to_port   = 0
     protocol  = "-1"
     # Only allowing traffic in from the load balancer security group
-    security_groups = ["${aws_security_group.nextjs14-lb_security_group.id}"]
+    security_groups = ["${aws_security_group.catbird-nextjs-lb_security_group.id}"]
   }
 
   egress {
@@ -218,6 +218,6 @@ resource "aws_security_group" "nextjs14-service_security_group" {
 }
 
 output "lb_dns" {
-  value       = aws_alb.nextjs14-lb.dns_name
+  value       = aws_alb.catbird-nextjs-lb.dns_name
   description = "AWS load balancer DNS Name"
 }
