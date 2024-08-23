@@ -28,7 +28,7 @@ jobs:
         run: |
           terraform fmt
           terraform init -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars -input=false -force-copy
-          terraform plan -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars
+          terraform plan -var-file="terraform.nonprod.tfvars" -input=false
   deploy:
     name: Terraform Deploy
     environment: non-production
@@ -51,6 +51,6 @@ jobs:
         run: |
           terraform fmt
           terraform init -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars -input=false -force-copy
-          terraform apply -var-file="terraform.nonprod.tfvars" -auto-approve
+          terraform apply -var-file="terraform.nonprod.tfvars" -auto-approve -input=false
 
 #TODO refactor to use OIDC instead of AWS credentials
