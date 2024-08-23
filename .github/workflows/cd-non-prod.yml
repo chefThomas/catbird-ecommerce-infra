@@ -27,7 +27,7 @@ jobs:
       - name: Initialise project and view terraform plan
         run: |
           terraform fmt
-          terraform init -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars
+          terraform init -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars -input=false -force-copy
           terraform plan -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars
   deploy:
     name: Terraform Deploy
@@ -50,7 +50,7 @@ jobs:
       - name: Aplly Terraform plan
         run: |
           terraform fmt
-          terraform init -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars
+          terraform init -var-file="terraform.nonprod.tfvars" -backend-config=backend-nonprod.tfvars -input=false -force-copy
           terraform apply -var-file="terraform.nonprod.tfvars" -auto-approve
 
 #TODO refactor to use OIDC instead of AWS credentials
