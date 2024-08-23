@@ -1,4 +1,5 @@
 terraform {
+  backend "s3" { region = "us-east-1" }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -14,7 +15,6 @@ provider "aws" {
 }
 
 # Creating an ECR Repository
-
 resource "aws_ecr_repository" "ecomm-ecr-repo" {
   name                 = "ecomm-ecr-repo"
   image_tag_mutability = "MUTABLE"
@@ -24,60 +24,10 @@ resource "aws_ecr_repository" "ecomm-ecr-repo" {
     scan_on_push = true
   }
 }
-# --- Build & push image ---
-
-# locals {
-#   repo_url = aws_ecr_repository.ecomm-ecr-repo.repository_url
-# }
-
-# resource "null_resource" "image" {
-#   triggers = {
-#     hash = md5(join("-", [for x in fileset("", "./{*.py,*.tsx,Dockerfile}") : filemd5(x)]))
-#   }
-
-#   provisioner "local-exec" {
-#     command = <<EOF
-#       aws ecr get-login-password | docker login --username AWS --password-stdin ${local.repo_url}
-#       docker build --platform linux/amd64 -t ${local.repo_url}:latest .
-#       docker push ${local.repo_url}:latest
-#     EOF
-#   }
-# }
-
-# data "aws_ecr_image" "latest" {
-#   repository_name = aws_ecr_repository.ecomm-ecr-repo.name
-#   image_tag       = "latest"
-#   depends_on      = [null_resource.image]
-# }
-
 
 # Creating an ECS cluster
 resource "aws_ecs_cluster" "catbird-nextjs-cluster" {
-  name = "catbird-nextjs-cluster" # Naming the cluster
-}
-
-# creating an iam policy document for ecsTaskExecutionRole
-data "aws_iam_policy_document" "assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-
-# creating an iam role with needed permissions to execute tasks
-resource "aws_iam_role" "ecsTaskExecutionRole" {
-  name               = "ecsTaskExecutionRole"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-}
-
-# attaching AmazonECSTaskExecutionRolePolicy to ecsTaskExecutionRole
-resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
-  role       = aws_iam_role.ecsTaskExecutionRole.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  name = "catbird-nextjs-cluster-${var.environment}" # Naming the cluster
 }
 
 # Creating the task definition
